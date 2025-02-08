@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Website Tracking</title>
+</head>
+<body>
+
+<h1>Welcome to My Website!</h1>
+
+<p>This is a simple example of website tracking.</p>
+
+<button id="myButton">Click Me!</button>
+
+<script>
+    // JavaScript tracking code
+    document.getElementById("myButton").addEventListener("click", function() {
+        // Send data to the server using fetch API
+        fetch('track.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded' // Important for PHP to parse
+            },
+            body: 'event=button_click' // Data to send
+        })
+            .then(response => response.text()) // Optional: Handle server response
+            .then(data => {
+                console.log('Tracking data sent:', data); // Log the response
+            })
+            .catch(error => {
+                console.error('Error sending tracking data:', error);
+            });
+    });
+
+    // Example of tracking page view (you'd normally do this on every page)
+    fetch('track.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'event=page_view&page=' + encodeURIComponent(window.location.href) // Include the page URL
+    })
+        .then(response => response.text())
+        .then(data => {
+            console.log('Page view tracked:', data);
+        })
+        .catch(error => {
+            console.error('Error tracking page view:', error);
+        });
+
+</script>
+
+</body>
+</html>
