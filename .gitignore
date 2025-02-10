@@ -1,3 +1,9 @@
 .idea
 .env
 
+## local dev
+docker-compose.yml
+Dockerfile
+.docker
+.ddev
+.docksal
