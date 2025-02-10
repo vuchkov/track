@@ -7,3 +7,5 @@ Dockerfile
 .docker
 .ddev
 .docksal
+
+/vendor/
