@@ -4,7 +4,8 @@ require_once __DIR__ . '/../.env'; // Load environment variables
 
 // Database configuration based on .env
 if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
-    $dsn = 'sqlite:' . $_ENV['SQLITE_DB_PATH'];
+    $dbName = 'sqlite:' . $_ENV['SQLITE_DB_PATH'];
+    $db = new SQLite3($dbName);
 } elseif ($_ENV['DATABASE_DRIVER'] === 'mysql') {
     $dsn = 'mysql:host=' . $_ENV['MYSQL_HOST'] . ';dbname=' . $_ENV['MYSQL_DATABASE'];
     try {
@@ -32,7 +33,7 @@ if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
 $dbName = 'mydatabase.db'; // Name of the SQLite database file
 
 // Create a new SQLite3 object
-$db = new SQLite3($dbName);
+
 
 // Check for errors during database creation
 if(!$db){
