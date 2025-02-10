@@ -1,74 +1,55 @@
 <?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
-require_once __DIR__ . '/../.env'; // Load environment variables
+// Load .env variables
+if (!file_exists(__DIR__ . '/.env')) {
+    echo json_encode(['error' => 'Error: .env does not exist']);
+    exit();
+}
+require_once realpath(__DIR__ . '/vendor/autoload.php');
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
+$dotenv->load();
+
+if (empty($_ENV['DATABASE_DRIVER'])) {
+    echo json_encode(['error' => 'DATABASE_DRIVER is missing in .env']);
+    exit();
+}
 
 // Database configuration based on .env
 if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
-    $dbName = 'sqlite:' . $_ENV['SQLITE_DB_PATH'];
-    $db = new SQLite3($dbName);
+    try {
+        $db = new SQLite3('sqlite:' . $_ENV['SQLITE_DB_PATH'], SQLITE3_OPEN_CREATE);
+    }  catch(Exception $e) {
+        echo json_encode(['error' => $e->getMessage()]);
+        exit();
+    }
+    // to be continue...
 } elseif ($_ENV['DATABASE_DRIVER'] === 'mysql') {
     $dsn = 'mysql:host=' . $_ENV['MYSQL_HOST'] . ';dbname=' . $_ENV['MYSQL_DATABASE'];
     try {
-        $pdo = new PDO($dsn, $_ENV['DATABASE_USER'], $_ENV['DATABASE_PASSWORD']);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        // Create MySQL database if it doesn't exist
-        $sql = "CREATE DATABASE IF NOT EXISTS " . $_ENV['MYSQL_DATABASE'];
-        $pdo->exec($sql);
-        // Create tracking table if it doesn't exist
+        $db = new PDO($dsn, $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD']);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $sql = "CREATE TABLE IF NOT EXISTS track (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      event VARCHAR(255) INDEX,
-      session VARCHAR(255) INDEX,
-      user VARCHAR(255) INDEX,
-      created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )";
-        $pdo->exec($sql);
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            event VARCHAR(255) INDEX,
+            url VARCHAR(255) INDEX,
+            session VARCHAR(255) INDEX,
+            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )";
+        $db->exec($sql);
     } catch(PDOException $e) {
-        die("Connection failed: " . $e->getMessage());
+        echo json_encode(['error' => $e->getMessage()]);
+        exit();
     }
 } else {
-    die("Invalid database driver specified in .env");
+    echo json_encode(['error' => 'Invalid database driver specified in .env']);
+    exit();
 }
 
-$dbName = 'mydatabase.db'; // Name of the SQLite database file
-
-// Create a new SQLite3 object
-
-
-// Check for errors during database creation
-if(!$db){
-    echo "Error: Could not open or create database: " . $db->lastErrorMsg();
-} else {
-    echo "Opened database successfully\n";
-
-    // Create the table if it doesn't exist
-    $createTableQuery = "CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL
-  )";
-
-    // Execute the CREATE TABLE query
-    $result = $db->query($createTableQuery);
-
-    // Check for errors during table creation
-    if(!$result){
-        echo "Error creating table: " . $db->lastErrorMsg();
-    } else {
-        echo "Table created successfully\n";
-    }
-}
-
-// Database connection (replace with your credentials)
-$servername = "your_servername";
-$username = "your_username";
-$password = "your_password";
-$dbname = "your_dbname";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['error' => 'Invalid request method.']);
+    exit();
 }
 
 // Get the event data
@@ -76,19 +57,12 @@ $event = $_POST['event'];
 
 // Store the tracking data in the database
 if ($event == "button_click") {
-    $sql = "INSERT INTO tracking (event_type, event_data) VALUES ('button_click', '')"; // You might add more data here later
+    $sql = "INSERT INTO track (event_type, event_data) VALUES ('button_click', '')";
 } else if ($event == "page_view") {
     $page = $_POST['page'];
-    $sql = "INSERT INTO tracking (event_type, event_data) VALUES ('page_view', '$page')";
+    $sql = "INSERT INTO track (event_type, event_data) VALUES ('page_view', '$page')";
 } else {
-    $sql = "INSERT INTO tracking (event_type, event_data) VALUES ('unknown', '')";
-}
-
-
-if ($conn->query($sql) === TRUE) {
-    echo "Tracking data recorded successfully";
-} else {
-    echo "Error: " . $sql . "<br>" . $conn->error;
+    $sql = "INSERT INTO track (event_type, event_data) VALUES ('unknown', '')";
 }
 
 // Close the database connection
