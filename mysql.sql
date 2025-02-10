@@ -32,7 +32,7 @@ CREATE TABLE `track` (
   `event` varchar(150) NOT NULL DEFAULT 'page_view',
   `url` varchar(255) NOT NULL DEFAULT '',
   `session` varchar(150) NOT NULL DEFAULT '',
-  `created` timestamp NOT NULL DEFAULT current_timestamp()
+  `created` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
