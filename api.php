@@ -28,14 +28,13 @@ if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
     // to be continue...
     // @TODO
 } elseif ($_ENV['DATABASE_DRIVER'] === 'mysql') {
-    $dsn = 'mysql:host=' . $_ENV['MYSQL_HOST'] . ';dbname='
-        . $_ENV['MYSQL_DATABASE'];
+    $dsn = 'mysql:host=' .$_ENV['MYSQL_HOST']. ';dbname=' .$_ENV['MYSQL_DATABASE']. ';charset=utf8';
     try {
         $db = new PDO($dsn, $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD']);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = 'SELECT * FROM track LIMIT 10';
+        /*$sql = 'SELECT * FROM track LIMIT 10';
         $db->prepare($sql);
-        $db->exec($sql);
+        $db->exec($sql);*/
     } catch(PDOException $e) {
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
@@ -53,17 +52,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+$input = json_decode(file_get_contents('php://input'), true);
+
+$event = $input['event'] ?? '';
+$url = $input['url'] ?? '';
+$session = $input['session'] ?? '';
+//$referrer = $input['referrer'] ?? '';
+//$userAgent = $input['userAgent'] ?? '';
+//$ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+
 // Get the post data.
-$event = $_POST['event'] ?: 'page_view';
+/*$event = $_POST['event'] ?: 'page_view';
 $url = $_POST['url'] ?: '';
-$session = $_POST['session'] ?: '';
+$session = $_POST['session'] ?: '';*/
 
 // Validate the post data.
 // @TODO
 
 // Store the data in the database
-$sql = "INSERT INTO track (event, url, session) VALUES (?, ?, ?)";
-$db->prepare($sql)->execute([$event, $url, $session]);
+$sql = "INSERT INTO track (event, url, session) VALUES (:event, :url, :session)";
+$db->prepare($sql)->execute([
+    ':event' => $event,
+    ':url' => $url,
+    ':session' => $session,
+]);
 if (!$db) {
     http_response_code(500);
     echo json_encode(['error' => 'Database error']);
@@ -71,5 +83,5 @@ if (!$db) {
 }
 
 http_response_code(200);
-echo json_encode(['message' => 'New track added']);
+echo json_encode(["status" => "success"]);
 exit();
