@@ -4,6 +4,7 @@ header('Access-Control-Allow-Origin: *');
 
 // Load .env variables
 if (!file_exists(__DIR__ . '/.env')) {
+    http_response_code(500);
     echo json_encode(['error' => 'Error: .env does not exist']);
     exit();
 }
@@ -12,11 +13,11 @@ $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
 
 if (empty($_ENV['DATABASE_DRIVER'])) {
+    http_response_code(500);
     echo json_encode(['error' => 'DATABASE_DRIVER is missing in .env']);
     exit();
 }
 
-// Database configuration based on .env
 if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
     try {
         $db = new SQLite3('sqlite:' . $_ENV['SQLITE_DB_PATH'], SQLITE3_OPEN_CREATE);
@@ -25,45 +26,50 @@ if ($_ENV['DATABASE_DRIVER'] === 'sqlite') {
         exit();
     }
     // to be continue...
+    // @TODO
 } elseif ($_ENV['DATABASE_DRIVER'] === 'mysql') {
-    $dsn = 'mysql:host=' . $_ENV['MYSQL_HOST'] . ';dbname=' . $_ENV['MYSQL_DATABASE'];
+    $dsn = 'mysql:host=' . $_ENV['MYSQL_HOST'] . ';dbname='
+        . $_ENV['MYSQL_DATABASE'];
     try {
         $db = new PDO($dsn, $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD']);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $sql = "CREATE TABLE IF NOT EXISTS track (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            event VARCHAR(255) INDEX,
-            url VARCHAR(255) INDEX,
-            session VARCHAR(255) INDEX,
-            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )";
+        $sql = 'SELECT * FROM track LIMIT 10';
+        $db->prepare($sql);
         $db->exec($sql);
     } catch(PDOException $e) {
+        http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
         exit();
     }
 } else {
+    http_response_code(500);
     echo json_encode(['error' => 'Invalid database driver specified in .env']);
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(500);
     echo json_encode(['error' => 'Invalid request method.']);
     exit();
 }
 
-// Get the event data
-$event = $_POST['event'];
+// Get the post data.
+$event = $_POST['event'] ?: 'page_view';
+$url = $_POST['url'] ?: '';
+$session = $_POST['session'] ?: '';
 
-// Store the tracking data in the database
-if ($event == "button_click") {
-    $sql = "INSERT INTO track (event_type, event_data) VALUES ('button_click', '')";
-} else if ($event == "page_view") {
-    $page = $_POST['page'];
-    $sql = "INSERT INTO track (event_type, event_data) VALUES ('page_view', '$page')";
-} else {
-    $sql = "INSERT INTO track (event_type, event_data) VALUES ('unknown', '')";
+// Validate the post data.
+// @TODO
+
+// Store the data in the database
+$sql = "INSERT INTO track (event, url, session) VALUES (?, ?, ?)";
+$db->prepare($sql)->execute([$event, $url, $session]);
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database error']);
+    exit();
 }
 
-// Close the database connection
-$db->close();
+http_response_code(200);
+echo json_encode(['message' => 'New track added']);
+exit();
