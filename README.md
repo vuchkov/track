@@ -22,9 +22,8 @@
 on the website & pages.
 
 ## Updates
-- Add MySQL (or SQLite - optional) DB
+- Add MySQL (or SQLite - optional)
 - Create a RestAPI endpoint `api.php`
-- Add `.env.example`
-- Create the example webpage: `index.html`
-- Create the remote `tracker.js`
-- Add MySQL support
+- Add example `.env`
+- Example web page: `index.html`
+- The remote tracker: `tracker.js`
