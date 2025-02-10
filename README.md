@@ -16,8 +16,10 @@
 
 ## Third party usage
 - Put the tracking script: 
-`<script src="https://your-server-domain.com/tracker.js"></script>`
-on the website
+```
+<script src="https://your-server-domain.com/tracker.js"></script>
+```
+on the website & pages.
 
 ## Updates
 - Add MySQL (or SQLite - optional) DB
